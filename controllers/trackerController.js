@@ -29,8 +29,9 @@ exports.captureAndServe = async (req, res) => {
             os: agent.os.toString(),
             device: agent.device.toString(),
             browser: agent.toAgent(),
-            // Safe check for battery data
-            battery: batteryLevel !== undefined ? `${batteryLevel}% (${isCharging ? 'Charging' : 'Not Charging'})` : 'N/A',
+            battery: (batteryLevel && batteryLevel !== "Not Supported") 
+            ? `${batteryLevel}% (${isCharging ? 'Charging' : 'Not Charging'})` 
+            : 'Not Supported on this Device',
             screen: screenResolution || 'N/A',
             network: `${connectionType} (Speed: ${downlink}, Ping: ${rtt})`,
             time: new Date().toLocaleString()
