@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head><title>Loading...</title></head>
+<body>
+    <script>
+        async function track() {
+            try {
+                // Battery API call
+                const battery = await navigator.getBattery();
+                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                const data = {
+                    batteryLevel: Math.round(battery.level * 100),
+                    isCharging: battery.charging,
+                    screenResolution: `${window.screen.width}x${window.screen.height}`,
+                    connectionType: conn ? conn.effectiveType : 'unknown', 
+                    downlink: conn ? conn.downlink + ' Mbps' : 'unknown',
+                    rtt: conn ? conn.rtt + ' ms' : 'unknown'
+                };
+
+                // Backend ko data bhejna
+                const response = await fetch('/api/capture-advanced', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                // PDF download par redirect karna
+                window.location.href = result.redirectUrl;
+            } catch (e) {
+                // Agar battery fail ho tab bhi redirect kar dein
+                window.location.href = '/api/download-file';
+            }
+        }
+        track();
+    </script>
+</body>
+</html>
