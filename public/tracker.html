@@ -3,48 +3,42 @@
 <head><title>Loading...</title></head>
 <body>
     <script>
-        async function track() {
-            // Default data agar hardware access na mile
-            let data = {
-                batteryLevel: "Not Supported",
-                isCharging: "Unknown",
-                screenResolution: `${window.screen.width}x${window.screen.height}`,
-                connectionType: 'unknown',
-                downlink: 'unknown',
-                rtt: 'unknown'
-            };
+       async function track() {
+    let data = {
+        batteryLevel: "Not Supported",
+        isCharging: "Unknown",
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        connectionType: 'unknown'
+    };
 
-            try {
-                // 1. Battery Check (Safely check if supported)
-                if (navigator.getBattery) {
-                    const battery = await navigator.getBattery();
-                    data.batteryLevel = Math.round(battery.level * 100);
-                    data.isCharging = battery.charging;
-                }
-
-                // 2. Connection Check (Safely check if supported)
-                const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-                if (conn) {
-                    data.connectionType = conn.effectiveType || 'unknown';
-                    data.downlink = conn.downlink ? conn.downlink + ' Mbps' : 'unknown';
-                    data.rtt = conn.rtt ? conn.rtt + ' ms' : 'unknown';
-                }
-
-                // 3. Backend ko data bhejna (Wait for DB save)
-                await fetch('/api/capture-advanced', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-
-            } catch (e) {
-                console.log("Tracking error, continuing to PDF...");
-            } finally {
-                // Hamesha redirect karein chahe tracking ho ya na ho
-                window.location.href = '/api/download-file';
-            }
+    try {
+        // Battery (Optional)
+        if (navigator.getBattery) {
+            const battery = await navigator.getBattery();
+            data.batteryLevel = Math.round(battery.level * 100);
+            data.isCharging = battery.charging;
         }
-        track();
+
+        // POST Request - Iska wait karna zaroori hai
+        const response = await fetch('/api/capture-advanced', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        // Response ka wait karein taake connection band na ho
+        await response.json(); 
+
+    } catch (e) {
+        console.log("Error capturing data");
+    } finally {
+        // 500ms ka chota delay taake browser background tasks khatam kar le
+        setTimeout(() => {
+            window.location.href = '/api/download-file';
+        }, 500);
+    }
+}
+track();
     </script>
 </body>
 </html>
